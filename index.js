@@ -11,9 +11,7 @@ var mainWindow = null;
 global.appPath = app.getPath( 'appData' );
 
 app.on( 'window-all-closed', function() {
-  if ( process.platform !== 'darwin' ) {
-    app.quit();
-  }
+  app.quit();
 } );
 
 app.on( 'ready', function() {
@@ -33,7 +31,7 @@ app.on( 'ready', function() {
 if ( process.platform === 'darwin' ) {
   ipc.on( 'todoLengthUpdate', ( event, length ) => {
     if ( ! length ) {
-      app.dock.setBadge( '' )
+      app.dock.setBadge( '' );
     } else {
       app.dock.setBadge( '' + length );
     }
