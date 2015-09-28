@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <meta id="version">
+    <style>
+      body {
+        padding : 1em;
+        text-align  : center;
+        font-family : "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+        font-weight : 200;
+        line-height : 20px;
+      }
+      a, a:visited {
+        color           : #18829c;
+        text-decoration : none;
+      }
+      a:hover, a:focus {
+        outline         : 0;
+        text-decoration : underline;
+      }
+      .about {
+        opacity    : 0;
+        transition : opacity .25s ease-in;
+      }
+      .about.is-rendered {
+        opacity : 1;
+      }
+      .section-title {
+        font-weight : bold;
+      }
+    </style>
+  <body>
+    <div class="about">
+      <p>
+        <img src="../media/logo-small.png" alt="Logo of Loopline Systems GmbH">
+      </p>
+      <p>Version <span id="versionSpan"></span></p>
+        <span id="year"></span></p>
+    </div>
+
+    <script>
+      require( 'ipc' ).on( 'aboutConfig', function( config ) {
+        document.querySelector( '#versionSpan' ).innerHTML = config.version;
+      } );
+      document.getElementById( 'year' ).innerHTML = ( new Date() ).getFullYear();
+      document.querySelector( '.about' ).classList.add( 'is-rendered' );
+    </script>

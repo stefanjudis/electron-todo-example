@@ -1,7 +1,10 @@
 (function (window) {
   'use strict';
 
-  var ipc = require( 'ipc' );
+  var ipc      = require( 'ipc' );
+  var path     = require( 'path' );
+  var notifier = require( 'node-notifier' );
+  var iconPath = path.join( __dirname, '..', 'media', 'logo.png' );
 
   /**
    * Takes a model and view and acts as the controller between them
@@ -50,6 +53,12 @@
     self.model.getCount( function ( todos ) {
       self._updateBadge( todos.active );
     } );
+
+
+    /**
+     * Deal with ipc events
+     */
+    ipc.on( 'clearTodos', this.clearTodos.bind( this ) );
   }
 
   /**
@@ -105,10 +114,17 @@
       return;
     }
 
-    self.model.create(title, function () {
-      self.view.render('clearNewTodo');
-      self._filter(true);
-    });
+    self.model.create( title, function () {
+      self.view.render( 'clearNewTodo' );
+      self._filter( true );
+
+      notifier.notify( {
+        'title'   : 'More work to do!!!',
+        'message' : '\'' + title + '\' has been created',
+        'wait'    : false,
+        'icon'    : iconPath
+      } );
+    } );
   };
 
   /*
@@ -193,7 +209,18 @@
         id: id,
         completed: completed
       });
-    });
+
+      if ( completed ) {
+        self.model.read( id, function( todos ) {
+          notifier.notify( {
+            'title'   : 'Good job!!!',
+            'message' : '\'' + todos[ 0 ].title + '\' has been completed',
+            'wait'    : false,
+            'icon'    : iconPath
+          } );
+        } );
+      }
+    } );
 
     if (!silent) {
       self._filter();
@@ -278,6 +305,26 @@
   Controller.prototype._updateBadge = function ( activeCount ) {
     ipc.send( 'todoLengthUpdate', activeCount );
   };
+
+
+  /**
+   * Clear all items
+   */
+  Controller.prototype.clearTodos = function() {
+    var self = this;
+
+    this.model.removeAll( function( data ) {
+      self._updateCount();
+      self.view.render( 'showEntries', data );
+
+      notifier.notify( {
+        'title'   : 'Starting from scratch?',
+        'message' : 'All items have been removed',
+        'wait'    : false,
+        'icon'    : iconPath
+      } );
+    } );
+  }
 
   // Export to window
   window.app = window.app || {};

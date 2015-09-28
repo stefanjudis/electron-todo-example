@@ -1,6 +1,8 @@
 var app           = require( 'app' );
 var BrowserWindow = require( 'browser-window' );
 var ipc           = require( 'ipc' );
+var Menu          = require( 'menu' );
+var menuBuilder   = require( './menu-builder' );
 
 require('crash-reporter').start();
 
@@ -19,10 +21,13 @@ app.on( 'ready', function() {
 
   mainWindow.loadUrl( `file://${__dirname}/renderer/index.html` );
 
+  Menu.setApplicationMenu( menuBuilder.init() );
+
   mainWindow.on('closed', function() {
     mainWindow = null;
   } );
 } );
+
 
 
 if ( process.platform === 'darwin' ) {

@@ -2,13 +2,10 @@
 (function (window) {
   'use strict';
 
-  var notifier    = require( 'node-notifier' );
   var path        = require( 'path' );
   var fs          = require( 'fs-extra' );
   var remote      = require( 'remote' );
   var appDataPath = path.join( remote.getGlobal( 'appPath' ), 'TodoMVC' );
-
-  var iconPath = path.join( __dirname, '..', 'media', 'logo.png' );
 
   /**
    * Creates a new client side storage object and will create an empty
@@ -25,8 +22,7 @@
     this._dbName    = name;
     this._dbFilePath = path.join( appDataPath, name + '.json' );
 
-
-    if ( ! fs.exists( this._dbFilePath ) ) {
+    if ( ! fs.existsSync( this._dbFilePath ) ) {
       var data = {
         todos: []
       };
@@ -99,15 +95,6 @@
         if (todos[i].id === id) {
           for (var key in updateData) {
             todos[i][key] = updateData[key];
-
-            if ( updateData.completed ) {
-              notifier.notify( {
-                'title'   : 'Good job!!!',
-                'message' : '\'' + todos[ i ].title + '\' has been completed',
-                'wait'    : false,
-                'icon'    : iconPath
-              } );
-            }
           }
           break;
         }
@@ -122,13 +109,6 @@
       todos.push(updateData);
       fs.writeJsonSync( this._dbFilePath, data );
       callback.call(this, [updateData]);
-
-      notifier.notify( {
-        'title'   : 'More work todo!!!',
-        'message' : '\'' + updateData.title + '\' has been added',
-        'wait'    : false,
-        'icon'    : iconPath
-      } );
     }
   };
 
