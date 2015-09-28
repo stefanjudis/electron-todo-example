@@ -6,6 +6,8 @@ require('crash-reporter').start();
 
 var mainWindow = null;
 
+global.appPath = app.getPath( 'appData' );
+
 app.on( 'window-all-closed', function() {
   if ( process.platform !== 'darwin' ) {
     app.quit();
@@ -13,7 +15,7 @@ app.on( 'window-all-closed', function() {
 } );
 
 app.on( 'ready', function() {
-  mainWindow = new BrowserWindow( { width: 1200, height: 800 } );
+  mainWindow             = new BrowserWindow( { width: 1200, height: 800 } );
 
   mainWindow.loadUrl( `file://${__dirname}/renderer/index.html` );
 
@@ -25,6 +27,10 @@ app.on( 'ready', function() {
 
 if ( process.platform === 'darwin' ) {
   ipc.on( 'todoLengthUpdate', ( event, length ) => {
-    app.dock.setBadge( '' + length );
+    if ( ! length ) {
+      app.dock.setBadge( '' )
+    } else {
+      app.dock.setBadge( '' + length );
+    }
   } );
 }

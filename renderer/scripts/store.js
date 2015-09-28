@@ -2,8 +2,11 @@
 (function (window) {
   'use strict';
 
-  var notifier = require( 'node-notifier' );
-  var path     = require( 'path' );
+  var notifier    = require( 'node-notifier' );
+  var path        = require( 'path' );
+  var fs          = require( 'fs-extra' );
+  var remote      = require( 'remote' );
+  var appDataPath = path.join( remote.getGlobal( 'appPath' ), 'TodoMVC' );
 
   var iconPath = path.join( __dirname, '..', 'media', 'logo.png' );
 
@@ -18,17 +21,21 @@
   function Store(name, callback) {
     callback = callback || function () {};
 
-    this._dbName = name;
 
-    if (!localStorage[name]) {
+    this._dbName    = name;
+    this._dbFilePath = path.join( appDataPath, name + '.json' );
+
+
+    if ( ! fs.exists( this._dbFilePath ) ) {
       var data = {
         todos: []
       };
 
-      localStorage[name] = JSON.stringify(data);
+      fs.ensureDirSync( appDataPath );
+      fs.writeJsonSync( this._dbFilePath, data );
     }
 
-    callback.call(this, JSON.parse(localStorage[name]));
+    callback.call( this, fs.readJsonSync( this._dbFilePath ) );
   }
 
 
@@ -50,7 +57,7 @@
       return;
     }
 
-    var todos = JSON.parse(localStorage[this._dbName]).todos;
+    var todos = fs.readJsonSync( this._dbFilePath ).todos;
 
     callback.call(this, todos.filter(function (todo) {
       for (var q in query) {
@@ -67,9 +74,9 @@
    *
    * @param {function} callback The callback to fire upon retrieving data
    */
-  Store.prototype.findAll = function (callback) {
+  Store.prototype.findAll = function ( callback ) {
     callback = callback || function () {};
-    callback.call(this, JSON.parse(localStorage[this._dbName]).todos);
+    callback.call( this, fs.readJsonSync( this._dbFilePath ).todos );
   };
 
   /**
@@ -81,7 +88,7 @@
    * @param {number} id An optional param to enter an ID of an item to update
    */
   Store.prototype.save = function (updateData, callback, id) {
-    var data = JSON.parse(localStorage[this._dbName]);
+    var data = fs.readJsonSync( this._dbFilePath );
     var todos = data.todos;
 
     callback = callback || function () {};
@@ -106,14 +113,14 @@
         }
       }
 
-      localStorage[this._dbName] = JSON.stringify(data);
-      callback.call(this, JSON.parse(localStorage[this._dbName]).todos);
+      fs.writeJsonSync( this._dbFilePath, data );
+      callback.call( this, fs.readJsonSync( this._dbFilePath, data ).todos );
     } else {
       // Generate an ID
       updateData.id = new Date().getTime();
 
       todos.push(updateData);
-      localStorage[this._dbName] = JSON.stringify(data);
+      fs.writeJsonSync( this._dbFilePath, data );
       callback.call(this, [updateData]);
 
       notifier.notify( {
@@ -132,7 +139,7 @@
    * @param {function} callback The callback to fire after saving
    */
   Store.prototype.remove = function (id, callback) {
-    var data = JSON.parse(localStorage[this._dbName]);
+    var data = fs.readJsonSync( this._dbFilePath );
     var todos = data.todos;
 
     for (var i = 0; i < todos.length; i++) {
@@ -142,8 +149,8 @@
       }
     }
 
-    localStorage[this._dbName] = JSON.stringify(data);
-    callback.call(this, JSON.parse(localStorage[this._dbName]).todos);
+    fs.writeJsonSync( this._dbFilePath, data );
+    callback.call( this, fs.readJsonSync( this._dbFilePath, data ).todos );
   };
 
   /**
@@ -152,8 +159,8 @@
    * @param {function} callback The callback to fire after dropping the data
    */
   Store.prototype.drop = function (callback) {
-    localStorage[this._dbName] = JSON.stringify({todos: []});
-    callback.call(this, JSON.parse(localStorage[this._dbName]).todos);
+    fs.writeJsonSync( this._dbFilePath, { todos : [] } );
+    callback.call(this, fs.readJsonSync( this._dbFilePath ).todos);
   };
 
   // Export to window
